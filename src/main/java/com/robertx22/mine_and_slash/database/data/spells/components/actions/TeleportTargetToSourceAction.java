@@ -96,7 +96,7 @@ public class TeleportTargetToSourceAction extends SpellAction {
 
     }
 
-    // only accurate to a block
+    // only accurate to a half block
     private Vec3 findNearbySafeTeleportPosition(Entity entity, Vec3 destination) {
 
         // search for a valid position in a cube surrounding the destination block
