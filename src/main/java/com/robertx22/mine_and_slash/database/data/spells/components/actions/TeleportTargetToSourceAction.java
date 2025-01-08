@@ -20,28 +20,21 @@ import java.util.List;
 
 public class TeleportTargetToSourceAction extends SpellAction {
 
-    // nudge a single increment in each direction when trying to find the correct side of a block to unclip from
-    private static final double NUDGE_SCALE = 1e-6;
-    private static final List<Vec3i> NUDGE_OFFSETS = createSearchOffsets(1);
+    // search used to find a safe position near the destination
+    private static final List<Vec3i> SEARCH_OFFSETS = Lists.newArrayList();
 
-    // check up to two half-block increment in each direction to unclip
-    private static final double UNCLIP_SCALE = 0.5;
-    private static final List<Vec3i> UNCLIP_OFFSETS = createSearchOffsets(2);
+    static {
+        final int SEARCH_RADIUS = 1;
 
-    // create offsets to search in a cube around a position
-    private static List<Vec3i> createSearchOffsets(int radius)
-    {
-        List<Vec3i> offsets = Lists.newArrayList();
-
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
-                for (int z = -radius; z <= radius; z++) {
-                    offsets.add(new Vec3i(x, y, z));
+        for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x++) {
+            for (int y = -SEARCH_RADIUS; y <= SEARCH_RADIUS; y++) {
+                for (int z = -SEARCH_RADIUS; z <= SEARCH_RADIUS; z++) {
+                    SEARCH_OFFSETS.add(new Vec3i(x, y, z));
                 }
             }
         }
 
-        offsets.sort((a, b) -> {
+        SEARCH_OFFSETS.sort((a, b) -> {
             // sort by horizontal distance, then by vertical distance
             int aDistance = Math.abs(a.getX()) + Math.abs(a.getZ());
             int bDistance = Math.abs(b.getX()) + Math.abs(b.getZ());
@@ -52,8 +45,6 @@ public class TeleportTargetToSourceAction extends SpellAction {
                 return aDistance - bDistance;
             }
         });
-
-        return offsets;
     }
 
     public TeleportTargetToSourceAction() {
@@ -96,16 +87,17 @@ public class TeleportTargetToSourceAction extends SpellAction {
 
     }
 
-    // only accurate to a half block
+    // only accurate to a block
     private Vec3 findNearbySafeTeleportPosition(Entity entity, Vec3 destination) {
 
         // search for a valid position in a cube surrounding the destination block
         Vec3 adjustedDestination = nudgePositionOutOfBlock(entity, destination);
         BlockPos blockPos = BlockPos.containing(adjustedDestination);
+        // test with feet at the bottom of the destination block
+        double yAdjust = entity.getBbHeight() / 2.0 - 0.5;
 
-        for (Vec3i offset : UNCLIP_OFFSETS) {
-            Vec3 offsetVec = new Vec3(offset.getX(), offset.getY(), offset.getZ());
-            Vec3 testPosition = blockPos.getCenter().add(offsetVec.scale(UNCLIP_SCALE));
+        for (Vec3i offset : SEARCH_OFFSETS) {
+            Vec3 testPosition = blockPos.offset(offset).getCenter().add(0, yAdjust, 0);
             if (canEntityFit(entity, testPosition)) {
                 return testPosition;
             }
@@ -118,9 +110,10 @@ public class TeleportTargetToSourceAction extends SpellAction {
     // teleport projectiles end up at the exact edge of the block they hit, nudge into free space
     private Vec3 nudgePositionOutOfBlock(Entity entity, Vec3 destination) {
 
-        for (Vec3i offset : NUDGE_OFFSETS) {
-            Vec3 offsetVec = new Vec3(offset.getX(), offset.getY(), offset.getZ());
-            Vec3 testPosition = destination.add(offsetVec.scale(NUDGE_SCALE));
+        final double NUDGE_SCALE = 1e-6;
+
+        for (Vec3i offset : SEARCH_OFFSETS) {
+            Vec3 testPosition = destination.add(new Vec3(offset.getX(), offset.getY(), offset.getZ()).scale(NUDGE_SCALE));
             if (canPointFit(entity, testPosition, NUDGE_SCALE)) {
                 return testPosition;
             }
@@ -155,4 +148,3 @@ public class TeleportTargetToSourceAction extends SpellAction {
     }
 
 }
-
