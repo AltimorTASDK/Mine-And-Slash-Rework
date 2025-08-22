@@ -26,6 +26,10 @@ public class SpellCastContext {
     public Unit unit;
 
     public SpellCastContext(LivingEntity caster, int ticksInUse, Spell spell) {
+        this(caster, ticksInUse, spell, null);
+    }
+
+    public SpellCastContext(LivingEntity caster, int ticksInUse, Spell spell, Unit unitOverride) {
         this.caster = caster;
         this.ticksInUse = ticksInUse;
         this.spell = spell;
@@ -34,7 +38,7 @@ public class SpellCastContext {
         Objects.requireNonNull(spell);
 
 
-        this.event = new SpellStatsCalculationEvent(caster, spell.GUID());
+        this.event = new SpellStatsCalculationEvent(caster, spell.GUID(), unitOverride);
 
         event.Activate();
 

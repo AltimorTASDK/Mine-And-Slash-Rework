@@ -42,6 +42,8 @@ public abstract class EffectEvent implements IGUID {
     public LivingEntity source;
     public LivingEntity target;
 
+    public Unit unitOverride = null;
+
     private boolean effectsCalculated = false;
 
     public EventData data = new EventData();
@@ -109,6 +111,11 @@ public abstract class EffectEvent implements IGUID {
 
         data.setupNumber(EventData.NUMBER, num);
 
+    }
+
+    public EffectEvent(LivingEntity source, LivingEntity target, Unit unitOverride) {
+        this(source, target);
+        this.unitOverride = unitOverride;
     }
 
     public EffectEvent(LivingEntity source, LivingEntity target) {
@@ -207,8 +214,9 @@ public abstract class EffectEvent implements IGUID {
     }
 
     public void calculateEffects() {
-        if (source.level().isClientSide) {
-            return; // todo is this fine? spell calc seems to be called on client every tick!
+        if (source.level().isClientSide && unitOverride == null) {
+            // client can only calc stats accurately if given unit from server
+            return;
         }
         if (!effectsCalculated) {
             effectsCalculated = true;
@@ -315,9 +323,9 @@ public abstract class EffectEvent implements IGUID {
 
         Unit un = enData.getUnit();
 
-
-        if (side == EffectSides.Source) {
-
+        if (unitOverride != null) {
+            un = unitOverride;
+        } else if (side == EffectSides.Source) {
             if (isSpell()) {
                 if (en instanceof Player p) {
                     if (getSpell() != null) {

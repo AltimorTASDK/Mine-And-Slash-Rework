@@ -37,6 +37,7 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -52,6 +53,8 @@ public class StatScreen extends BaseScreen implements INamedScreen {
     private Spell spell;
     private StatGuiGroupSection section;
 
+    private HashMap<String, Unit> spellUnits = new HashMap<>();
+
     public StatScreen(LivingEntity target, Unit unit) {
         super(xSize, ySize);
         this.target = target;
@@ -59,9 +62,7 @@ public class StatScreen extends BaseScreen implements INamedScreen {
     }
 
     public StatScreen(LivingEntity target) {
-        super(xSize, ySize);
-        this.target = target;
-        this.unit = null;
+        this(target, null);
     }
 
     @Override
@@ -269,13 +270,38 @@ public class StatScreen extends BaseScreen implements INamedScreen {
         return target;
     }
 
-    public Unit getUnit() {
-        return unit != null ? unit : Load.Unit(target).getUnit();
+    public Unit getUnitForSpell(Spell spell) {
+        String spellid = spell.GUID();
+
+        if (spellUnits.containsKey(spellid)) {
+            return spellUnits.get(spellid);
+        } else {
+            Packets.sendToServer(new GetSpellStatsRequestPacket(target, spell));
+            // store null to indicate we're waiting for the server
+            spellUnits.put(spellid, null);
+            return null;
+        }
     }
 
-    public void setUnit(Unit unit) {
-        this.unit = unit;
-        refreshStats();
+    public void setUnitForSpell(Spell spell, Unit unit) {
+        spellUnits.put(spell.GUID(), unit);
+
+        if (getSpell() == spell) {
+            refreshStats();
+        }
+    }
+
+    public Unit getUnit() {
+        if (unit != null) {
+            return unit;
+        }
+        if (spell != null) {
+            Unit spellUnit = getUnitForSpell(spell);
+            if (spellUnit != null) {
+                return spellUnit;
+            }
+        }
+        return Load.Unit(target).getUnit();
     }
 
     public Spell getSpell() {
@@ -284,10 +310,9 @@ public class StatScreen extends BaseScreen implements INamedScreen {
 
     public void setSpell(Spell spell) {
         this.spell = spell;
-        if (spell != null) {
-            Packets.sendToServer(new GetSpellStatsRequestPacket(target, spell));
-        } else {
-            setUnit(null);
+        // this also requests the unit if we don't have it
+        if (spell != null && getUnitForSpell(spell) != null) {
+            refreshStats();
         }
     }
 

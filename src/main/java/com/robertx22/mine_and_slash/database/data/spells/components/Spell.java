@@ -29,6 +29,7 @@ import com.robertx22.mine_and_slash.saveclasses.gearitem.gear_bases.StatRangeInf
 import com.robertx22.mine_and_slash.saveclasses.skill_gem.ISkillGem;
 import com.robertx22.mine_and_slash.saveclasses.spells.SpellCastingData;
 import com.robertx22.mine_and_slash.saveclasses.unit.ResourceType;
+import com.robertx22.mine_and_slash.saveclasses.unit.Unit;
 import com.robertx22.mine_and_slash.tags.all.SpellTags;
 import com.robertx22.mine_and_slash.tags.imp.SpellTag;
 import com.robertx22.mine_and_slash.uncommon.MathHelper;
@@ -241,7 +242,11 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
     }
 
     public final List<Component> GetTooltipString(StatRangeInfo info) {
-        SpellCastContext ctx = new SpellCastContext(info.player, 0, this);
+        return GetTooltipString(info, null);
+    }
+
+    public final List<Component> GetTooltipString(StatRangeInfo info, Unit unitOverride) {
+        SpellCastContext ctx = new SpellCastContext(info.player, 0, this, unitOverride);
         List<Component> list = new ArrayList<>();
         list.add(locName().withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
         list.add(ExileText.emptyLine().get());
@@ -264,7 +269,7 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         }
         if (config.usesCharges()) {
             list.add(Words.MAX_CHARGES.locName(config.charges).withStyle(ChatFormatting.YELLOW));
-            list.add(Words.CHARGE_REGEN.locName(tooltipFormatTicksAsSeconds(config.charge_regen)).withStyle(ChatFormatting.YELLOW));
+            list.add(Words.CHARGE_REGEN.locName(tooltipFormatTicksAsSeconds(getChargeCooldownTicks(ctx))).withStyle(ChatFormatting.YELLOW));
         } else {
             list.add(Words.COOLDOWN.locName(tooltipFormatTicksAsSeconds(getCooldownTicks(ctx))).withStyle(ChatFormatting.YELLOW));
         }

@@ -4,6 +4,7 @@ import com.robertx22.mine_and_slash.database.data.game_balance_config.GameBalanc
 import com.robertx22.mine_and_slash.database.data.spells.components.Spell;
 import com.robertx22.mine_and_slash.database.data.spells.entities.CalculatedSpellData;
 import com.robertx22.mine_and_slash.database.registry.ExileDB;
+import com.robertx22.mine_and_slash.saveclasses.unit.Unit;
 import com.robertx22.mine_and_slash.uncommon.datasaving.Load;
 import com.robertx22.mine_and_slash.uncommon.effectdatas.rework.EventData;
 import net.minecraft.util.Mth;
@@ -30,7 +31,11 @@ public class SpellStatsCalculationEvent extends EffectEvent {
     }
 
     public SpellStatsCalculationEvent(LivingEntity caster, String spellid) {
-        super(caster, caster);
+        this(caster, spellid, null);
+    }
+
+    public SpellStatsCalculationEvent(LivingEntity caster, String spellid, Unit unitOverride) {
+        super(caster, caster, unitOverride);
 
         Spell spell = ExileDB.Spells().get(spellid);
 
@@ -66,7 +71,6 @@ public class SpellStatsCalculationEvent extends EffectEvent {
 
         // todo test spells like summon duration multi etc
     }
-
 
     @Override
     protected void activate() {

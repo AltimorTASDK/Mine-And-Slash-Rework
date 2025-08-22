@@ -56,17 +56,14 @@ public class GetSpellStatsReplyPacket extends MyPacket<GetSpellStatsReplyPacket>
         if (!(Minecraft.getInstance().screen instanceof StatScreen screen)) {
             return;
         }
-        if (!ExileDB.Spells().isRegistered(spellid)) {
-            return;
-        }
-        // make sure we're still looking at this spell
         if (screen.getTarget() != ctx.getPlayer().level().getEntity(id)) {
             return;
         }
-        if (screen.getSpell() != ExileDB.Spells().get(spellid)) {
+        if (!ExileDB.Spells().isRegistered(spellid)) {
             return;
         }
-        screen.setUnit(UnitNbt.Load(nbt));
+        Spell spell = ExileDB.Spells().get(spellid);
+        screen.setUnitForSpell(spell, UnitNbt.Load(nbt));
     }
 
     @Override
