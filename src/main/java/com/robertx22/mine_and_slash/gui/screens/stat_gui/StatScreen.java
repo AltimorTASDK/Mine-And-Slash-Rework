@@ -1,7 +1,10 @@
 package com.robertx22.mine_and_slash.gui.screens.stat_gui;
 
+import com.robertx22.library_of_exile.main.Packets;
 import com.robertx22.mine_and_slash.a_libraries.neat.HealthBarRenderer;
 import com.robertx22.mine_and_slash.a_libraries.neat.NeatConfig;
+import com.robertx22.mine_and_slash.capability.player.PlayerData;
+import com.robertx22.mine_and_slash.database.data.spells.components.Spell;
 import com.robertx22.mine_and_slash.database.data.stats.Stat;
 import com.robertx22.mine_and_slash.database.data.stats.StatGuiGroup;
 import com.robertx22.mine_and_slash.database.data.stats.types.defense.Armor;
@@ -12,12 +15,15 @@ import com.robertx22.mine_and_slash.database.data.stats.types.resources.mana.Man
 import com.robertx22.mine_and_slash.gui.bases.BaseScreen;
 import com.robertx22.mine_and_slash.gui.bases.INamedScreen;
 import com.robertx22.mine_and_slash.mmorpg.SlashRef;
+import com.robertx22.mine_and_slash.saveclasses.spells.SpellCastingData.HotbarSpellData;
 import com.robertx22.mine_and_slash.saveclasses.unit.StatData;
+import com.robertx22.mine_and_slash.saveclasses.unit.Unit;
 import com.robertx22.mine_and_slash.uncommon.MathHelper;
 import com.robertx22.mine_and_slash.uncommon.datasaving.Load;
 import com.robertx22.mine_and_slash.uncommon.enumclasses.Elements;
 import com.robertx22.mine_and_slash.uncommon.localization.Words;
 import com.robertx22.mine_and_slash.uncommon.utilityclasses.ClientOnly;
+import com.robertx22.mine_and_slash.vanilla_mc.packets.GetSpellStatsRequestPacket;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -27,6 +33,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,13 +44,25 @@ import java.util.stream.Collectors;
 public class StatScreen extends BaseScreen implements INamedScreen {
     static ResourceLocation BG = SlashRef.guiId("stat_gui/background");
 
-    private LivingEntity target;
+    public static int xSize = 199;
+    public static int ySize = 222;
 
-    public StatScreen(LivingEntity target) {
-        super(199, 222);
+    private LivingEntity target;
+    private Unit unit;
+    private Spell spell;
+    private StatGuiGroupSection section;
+
+    public StatScreen(LivingEntity target, Unit unit) {
+        super(xSize, ySize);
         this.target = target;
+        this.unit = unit;
     }
 
+    public StatScreen(LivingEntity target) {
+        super(xSize, ySize);
+        this.target = target;
+        this.unit = null;
+    }
 
     @Override
     public void render(GuiGraphics gui, int x, int y, float ticks) {
@@ -86,10 +105,28 @@ public class StatScreen extends BaseScreen implements INamedScreen {
     public List<Stat> searched = new ArrayList<>();
     //   int elementsAmount = 1;
 
+    public void setupSpellButtons() {
+        if (!(target instanceof Player player)) {
+            return;
+        }
+
+        int totalWidth = SpellStatButton.xSize * 8;
+        int spellsLeft = guiLeft + (sizeX - totalWidth) / 2;
+        int spellsTop = guiTop + sizeY + 5;
+
+        PlayerData data = Load.player(player);
+
+        for (HotbarSpellData hotbarSpell : data.spellCastingData.getAllHotbarSpellsInfo()) {
+            int x = spellsLeft + SpellStatButton.xSize * hotbarSpell.hotbarkey;
+            this.publicAddButton(new SpellStatButton(this, hotbarSpell.spell, x, spellsTop));
+        }
+    }
 
     public void setupStatButtons() {
         this.renderables.removeIf(x -> x instanceof EditBox == false);
         this.children().removeIf(x -> x instanceof EditBox == false);
+
+        setupSpellButtons();
 
         //    this.children().clear();
         //  this.renderables.clear();
@@ -126,7 +163,7 @@ public class StatScreen extends BaseScreen implements INamedScreen {
                     int ysize = entry.getStatGuiPanelButtonYSize() + 3;
 
                     if (spaceleft >= ysize) {
-                        var stat = data.getUnit().getCalculatedStat(entry);
+                        var stat = getUnit().getCalculatedStat(entry);
                         if (stat.GetStat() != null) {
                             this.publicAddButton(new StatPanelButton(this, stat, x, y));
                             y += ysize;
@@ -208,7 +245,7 @@ public class StatScreen extends BaseScreen implements INamedScreen {
 
         if (true) {
 
-            var stats = Load.Unit(target).getUnit().getStats().stats.values().stream().filter(x -> x.GetStat().show_in_gui).map(x -> x.GetStat()).collect(Collectors.toList());
+            var stats = getUnit().getStats().stats.values().stream().filter(x -> x.GetStat().show_in_gui).map(x -> x.GetStat()).collect(Collectors.toList());
 
             var ungrouped = stats.stream().filter(x -> !x.gui_group.isValid()).collect(Collectors.toList());
             List<Stat> grouped = new ArrayList<>();
@@ -232,6 +269,37 @@ public class StatScreen extends BaseScreen implements INamedScreen {
         return target;
     }
 
+    public Unit getUnit() {
+        return unit != null ? unit : Load.Unit(target).getUnit();
+    }
+
+    public void setUnit(Unit unit) {
+        this.unit = unit;
+        refreshStats();
+    }
+
+    public Spell getSpell() {
+        return spell;
+    }
+
+    public void setSpell(Spell spell) {
+        this.spell = spell;
+        if (spell != null) {
+            Packets.sendToServer(new GetSpellStatsRequestPacket(target, spell));
+        } else {
+            setUnit(null);
+        }
+    }
+
+    public void showSection(StatGuiGroupSection section) {
+        this.section = section;
+        showStats(section.getStats(getUnit()), true);
+    }
+
+    public void refreshStats() {
+        showSection(section);
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -248,9 +316,7 @@ public class StatScreen extends BaseScreen implements INamedScreen {
             }).collect(Collectors.toList()), false);
         });
 
-
-        showStats(StatGuiGroupSection.CORE.getStats(target), true);
-
+        showSection(StatGuiGroupSection.CORE);
     }
 
     @Override

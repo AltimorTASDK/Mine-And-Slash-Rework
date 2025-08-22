@@ -25,6 +25,7 @@ import com.robertx22.mine_and_slash.database.data.stats.types.resources.mana.Man
 import com.robertx22.mine_and_slash.database.data.stats.types.resources.mana.ManaRegen;
 import com.robertx22.mine_and_slash.mmorpg.SlashRef;
 import com.robertx22.mine_and_slash.saveclasses.unit.StatData;
+import com.robertx22.mine_and_slash.saveclasses.unit.Unit;
 import com.robertx22.mine_and_slash.uncommon.datasaving.Load;
 import com.robertx22.mine_and_slash.uncommon.enumclasses.Elements;
 import com.robertx22.mine_and_slash.uncommon.interfaces.IAutoLocName;
@@ -51,31 +52,31 @@ public enum StatGuiGroupSection implements IAutoLocName {
 
     }),
     ALL("all", "All Stats", (x) -> {
-        return Load.Unit(x).getUnit().getStats().stats.values().stream().map(e -> e.GetStat()).collect(Collectors.toList());
+        return x.getStats().stats.values().stream().map(e -> e.GetStat()).collect(Collectors.toList());
     });
 
     public String id;
     public String name;
-    private Function<LivingEntity, List<Stat>> sup;
+    private Function<Unit, List<Stat>> sup;
 
-    StatGuiGroupSection(String id, String name, Function<LivingEntity, List<Stat>> sup) {
+    StatGuiGroupSection(String id, String name, Function<Unit, List<Stat>> sup) {
         this.id = id;
         this.name = name;
         this.sup = sup;
     }
 
-    public List<Stat> getStats(LivingEntity p) {
+    public List<Stat> getStats(Unit unit) {
         if (this == OTHER) {
             List<Stat> list = new ArrayList<>();
-            for (StatData stat : Load.Unit(p).getUnit().getStats().stats.values()) {
+            for (StatData stat : unit.getStats().stats.values()) {
                 if (stat.GetStat().show_in_gui) {
                     list.add(stat.GetStat());
                 }
             }
             for (StatGuiGroupSection type : StatGuiGroupSection.values()) {
                 if (type != StatGuiGroupSection.OTHER && type != StatGuiGroupSection.ALL) {
-                    list.removeAll(type.sup.apply(p));
-                    for (Stat stat : type.sup.apply(p)) {
+                    list.removeAll(type.sup.apply(unit));
+                    for (Stat stat : type.sup.apply(unit)) {
                         if (stat.gui_group.isValid()) {
                             for (Stat s : stat.gui_group.getSameGroupStats()) {
                                 list.removeIf(x -> x.GUID().equals(s.GUID()));
@@ -90,7 +91,7 @@ public enum StatGuiGroupSection implements IAutoLocName {
             }
             return list;
         }
-        return sup.apply(p);
+        return sup.apply(unit);
 
     }
 

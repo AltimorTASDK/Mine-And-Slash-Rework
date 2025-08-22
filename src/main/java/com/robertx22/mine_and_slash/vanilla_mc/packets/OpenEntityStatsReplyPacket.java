@@ -52,8 +52,7 @@ public class OpenEntityStatsReplyPacket extends MyPacket<OpenEntityStatsReplyPac
         Entity entity = ctx.getPlayer().level().getEntity(id);
 
         if (entity instanceof LivingEntity living) {
-            Load.Unit(living).setUnit(UnitNbt.Load(nbt));
-            ClientOnly.setScreen(new StatScreen(living));
+            ClientOnly.setScreen(new StatScreen(living, UnitNbt.Load(nbt)));
         }
     }
 

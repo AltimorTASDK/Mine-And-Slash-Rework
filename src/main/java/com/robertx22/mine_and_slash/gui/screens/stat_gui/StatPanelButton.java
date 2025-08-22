@@ -32,13 +32,12 @@ public class StatPanelButton extends ImageButton {
             screen.setInfo(stat);
         });
 
-        var data = Load.Unit(screen.getTarget());
-
+        var unit = screen.getUnit();
 
         if (stat.GetStat().gui_group.isValid()) {
             int i = 0;
             for (Stat st : stat.GetStat().gui_group.getSameGroupStats()) {
-                var statdata = data.getUnit().getCalculatedStat(st);
+                var statdata = unit.getCalculatedStat(st);
                 screen.publicAddButton(new StatIconAndNumberButton(screen, statdata, getX() + (i * (StatIconAndNumberButton.xSize + 15)), getY() + ySize));
                 i++;
             }

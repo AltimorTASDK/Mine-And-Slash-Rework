@@ -12,6 +12,7 @@ import com.robertx22.mine_and_slash.database.data.stats.datapacks.test.DatapackS
 import com.robertx22.mine_and_slash.mmorpg.MMORPG;
 import com.robertx22.mine_and_slash.mmorpg.SlashRef;
 import com.robertx22.mine_and_slash.saveclasses.unit.StatData;
+import com.robertx22.mine_and_slash.saveclasses.unit.Unit;
 import com.robertx22.mine_and_slash.uncommon.datasaving.Load;
 import com.robertx22.mine_and_slash.uncommon.localization.Words;
 import com.robertx22.mine_and_slash.uncommon.utilityclasses.NumberUtils;
@@ -37,6 +38,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
     private StatData stat;
     private StatInfoType type;
     private LivingEntity target;
+    private Unit unit;
 
     public StatInfoButton(StatScreen screen, StatInfoType type, StatData stat, int xPos, int yPos) {
         super(xPos, yPos, xSize, ySize, 0, 0, 0, SlashRef.guiId("stat_gui/info_button"), xSize, ySize, (button) -> {
@@ -46,6 +48,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
         this.type = type;
         this.stat = stat;
         this.target = screen.getTarget();
+        this.unit = screen.getUnit();
     }
 
     @Override
@@ -71,7 +74,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
         if (type.hasIcon) {
             RenderUtils.render16Icon(gui, this.type.getIcon(), getX() + iconX - 3, getY() + iconY - 3);
         }
-        var text = type.getRenderText(stat, Load.Unit(target));
+        var text = type.getRenderText(stat, Load.Unit(target), unit);
 
         if (text != null) {
             GuiUtils.renderScaledText(gui, getX() + numX, getY() + numY, 0.8F, text.getString(), ChatFormatting.YELLOW);
@@ -82,7 +85,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
 
         CURRENT_VALUE("current_value", true) {
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 String p = data.GetStat().IsPercent() ? "%" : "";
                 return Component.literal(MMORPG.DECIMAL_FORMAT.format(data.getValue()) + p);
             }
@@ -99,7 +102,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
         },
         DMG_MULTI("dmg_multi", true) {
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 String p = "x" + MMORPG.DECIMAL_FORMAT.format(data.getMoreStatTypeMulti());
                 return Component.literal(p);
             }
@@ -116,8 +119,8 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
         },
         USABLE_VALUE("usable_value", true) {
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
-                return Component.literal(data.GetStat() instanceof IUsableStat u ? NumberUtils.singleDigitFloat(u.getUsableValue(unit.getUnit(), (int) data.getValue(), unit.getLevel()) * 100F) + "%" : "");
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
+                return Component.literal(data.GetStat() instanceof IUsableStat u ? NumberUtils.singleDigitFloat(u.getUsableValue(unit, (int) data.getValue(), unitdata.getLevel()) * 100F) + "%" : "");
             }
 
             @Override
@@ -137,7 +140,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
             }
 
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 return Component.literal(data.GetStat().getMinCapTooltipText() + (data.GetStat().IsPercent() ? "%" : ""));
             }
 
@@ -153,7 +156,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
             }
 
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 return Component.literal(data.GetStat().getDefaultSoftCap() + "" + (data.GetStat().IsPercent() ? "%" : ""));
             }
 
@@ -169,7 +172,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
             }
 
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 return Component.literal(data.GetStat().getHardCapTooltipText() + (data.GetStat().IsPercent() ? "%" : ""));
             }
 
@@ -187,7 +190,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
             }
 
             @Override
-            public MutableComponent getRenderText(StatData data, EntityData unit) {
+            public MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit) {
                 return null;
             }
 
@@ -224,7 +227,7 @@ public class StatInfoButton extends ImageButton implements IStatInfoButton {
 
         public abstract boolean shouldShow(StatData data);
 
-        public abstract MutableComponent getRenderText(StatData data, EntityData unit);
+        public abstract MutableComponent getRenderText(StatData data, EntityData unitdata, Unit unit);
 
         public abstract List<MutableComponent> getTooltip(StatData data);
 
