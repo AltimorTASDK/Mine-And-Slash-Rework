@@ -197,6 +197,15 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         }
     }
 
+    public final int getBaseCastTimeTicks(SpellCastContext ctx) {
+        switch (ctx.type) {
+        case CHANNEL_LOOP:
+            return config.getRecastTimeTicks();
+        default:
+            return config.getCastTimeTicks();
+        }
+    }
+
     @Override
     public String GUID() {
         return identifier;

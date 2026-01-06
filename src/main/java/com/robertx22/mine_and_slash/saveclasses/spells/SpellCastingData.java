@@ -225,6 +225,11 @@ public class SpellCastingData {
     public Boolean casting = false;
     public ChargeData charges = new ChargeData();
 
+    // Tick count adjusted for cast speed
+    private double normalizedCastTicksDoneExact = 0.0;
+    // The the tick count to be used with EntityActivation.ON_CAST_TICK (timing stays consistent with cast speed)
+    public transient int spellActionTickCount;
+
     // Spell inputs to continuously attempt
     transient List<SpellInputBufferEntry> spellInputBuffer = new LinkedList<>();
     // The hotbar index of the spell the client is casting
@@ -386,12 +391,26 @@ public class SpellCastingData {
 
             if (canCast(ctx).can) {
                 setToCastAndSpendResources(ctx);
-                this.castType = SpellCastContext.CastType.CHANNEL_LOOP;
                 return true;
             }
         }
 
         return false;
+    }
+
+    private void runSpellActionsForTick(SpellCastContext ctx) {
+
+        // make sure we don't round down
+        double delta = Math.nextAfter((double) ctx.spell.getBaseCastTimeTicks(ctx) / spellTotalCastTicks, 1.0);
+
+        int startNormalizedTick = (int) normalizedCastTicksDoneExact;
+        normalizedCastTicksDoneExact += delta;
+        int endNormalizedTick = (int) normalizedCastTicksDoneExact;
+
+        for (int tick = startNormalizedTick; tick < endNormalizedTick; tick++) {
+            spellActionTickCount = tick;
+            ctx.spell.runTickActions(ctx);
+        }
     }
 
     private void onCastingTick(LivingEntity entity) {
@@ -418,7 +437,7 @@ public class SpellCastingData {
 
         SpellCastContext ctx = new SpellCastContext(entity, castTicksDone, spell, castType);
 
-        spell.runTickActions(ctx);
+        runSpellActionsForTick(ctx);
 
         int timesToCast = (int) ctx.spell.getConfig().times_to_cast;
 
@@ -474,9 +493,10 @@ public class SpellCastingData {
         this.castTickLeft = ctx.spell.getCastTimeTicks(ctx);
         this.spellTotalCastTicks = this.castTickLeft;
         this.castTicksDone = 0;
+        this.normalizedCastTicksDoneExact = 0.0;
         this.casting = true;
         this.cancelChanneledSpell = false;
-        this.castType = SpellCastContext.CastType.INITIAL_CAST;
+        this.castType = ctx.type;
 
         if (ctx.caster instanceof ServerPlayer p) {
             Load.player(p).playerDataSync.setDirty();

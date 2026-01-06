@@ -4,6 +4,9 @@ import com.robertx22.mine_and_slash.database.data.spells.components.EntityActiva
 import com.robertx22.mine_and_slash.database.data.spells.components.MapHolder;
 import com.robertx22.mine_and_slash.database.data.spells.map_fields.MapField;
 import com.robertx22.mine_and_slash.database.data.spells.spell_classes.SpellCtx;
+import com.robertx22.mine_and_slash.uncommon.datasaving.Load;
+
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Arrays;
 
@@ -26,6 +29,15 @@ public class OnTickCondition extends EffectCondition {
             .intValue();
 
         int tickCount = ctx.sourceEntity == null ? ctx.caster.tickCount : ctx.sourceEntity.tickCount;
+
+        if (ctx.activation == EntityActivation.ON_CAST_TICK && ctx.caster instanceof Player p) {
+            // normalized for cast speed
+            tickCount = Load.player(p).spellCastingData.spellActionTickCount;
+        } else if (ctx.sourceEntity != null) {
+            tickCount = ctx.sourceEntity.tickCount;
+        } else {
+            tickCount = ctx.caster.tickCount;
+        }
 
         if (ticks > 0) {
             return tickCount >= firstTick && tickCount % ticks == firstTick % ticks;
