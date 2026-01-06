@@ -73,6 +73,8 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
 
     public SpellAnimationData cast_animation = new SpellAnimationData(SpellAnimations.STEADY_CAST);
     public SpellAnimationData cast_finish_animation = new SpellAnimationData(SpellAnimations.CAST_FINISH);
+    public SpellAnimationData recast_animation = new SpellAnimationData(SpellAnimations.STEADY_CAST);
+    public SpellAnimationData recast_finish_animation = new SpellAnimationData(SpellAnimations.CAST_FINISH);
 
     public Boolean hasCost(ResourceType type) {
         if (type == ResourceType.energy) {
@@ -520,17 +522,15 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
 
     // todo need to make my own animations
     public AnimationHolder getAnimation(PlayerAnimations.CastEnum e) {
-        if (e == PlayerAnimations.CastEnum.CAST_START) {
-            if (false) {
-                return SpellAnimations.SPIN;
-            }
+        switch (e) {
+        case CAST_START:
             return this.cast_animation.getAnim();
-        }
-        if (e == PlayerAnimations.CastEnum.CAST_FINISH) {
-            if (false) {
-                return SpellAnimations.CAST_FINISH;
-            }
+        case CAST_FINISH:
             return this.cast_finish_animation.getAnim();
+        case RECAST_START:
+            return this.recast_animation.getAnim();
+        case RECAST_FINISH:
+            return this.recast_finish_animation.getAnim();
         }
         return AnimationHolder.none();
     }

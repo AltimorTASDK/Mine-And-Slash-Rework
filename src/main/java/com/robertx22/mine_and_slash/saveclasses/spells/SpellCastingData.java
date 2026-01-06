@@ -241,7 +241,7 @@ public class SpellCastingData {
     // Has no effect for non-channeled spells; init to true so channeled spells cancel on login
     transient boolean cancelChanneledSpell = true;
     // Whether this is the initial cast or a repeat of a channeled spell
-    transient SpellCastContext.CastType castType = SpellCastContext.CastType.INITIAL_CAST;
+    public transient SpellCastContext.CastType castType = SpellCastContext.CastType.INITIAL_CAST;
 
     public void onSpellInputPressed(int number) {
         if (number != -1 && number != spellInputNumber) {
@@ -337,16 +337,23 @@ public class SpellCastingData {
             }
         }
 
+        if (entity instanceof ServerPlayer p) {
+            Load.player(p).playerDataSync.setDirty();
+            switch (castType) {
+            case CHANNEL_LOOP:
+                TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.RECAST_FINISH, p, spell);
+                break;
+            default:
+                TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.CAST_FINISH, p, spell);
+                break;
+            }
+        }
+
         this.calcSpell = null;
         castTickLeft = 0;
         spellTotalCastTicks = 0;
         castTicksDone = 0;
         castSpellNumber = -1;
-
-        if (entity instanceof ServerPlayer p) {
-            Load.player(p).playerDataSync.setDirty();
-            TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.CAST_FINISH, p, spell);
-        }
     }
 
     public boolean isCasting() {
@@ -500,7 +507,14 @@ public class SpellCastingData {
 
         if (ctx.caster instanceof ServerPlayer p) {
             Load.player(p).playerDataSync.setDirty();
-            TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.CAST_START, p, ctx.spell);
+            switch (castType) {
+            case CHANNEL_LOOP:
+                TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.RECAST_START, p, ctx.spell);
+                break;
+            default:
+                TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.CAST_START, p, ctx.spell);
+                break;
+            }
         }
     }
 

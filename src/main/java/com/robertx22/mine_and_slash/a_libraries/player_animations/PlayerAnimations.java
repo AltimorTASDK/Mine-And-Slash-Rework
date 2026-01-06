@@ -30,7 +30,7 @@ public class PlayerAnimations {
     public static HashMap<UUID, KeyframeAnimationPlayer> castingAnimationPlayerLookup = new HashMap<>();
 
     public enum CastEnum {
-        CAST_START, CAST_FINISH
+        CAST_START, CAST_FINISH, RECAST_START, RECAST_FINISH
     }
 
 
