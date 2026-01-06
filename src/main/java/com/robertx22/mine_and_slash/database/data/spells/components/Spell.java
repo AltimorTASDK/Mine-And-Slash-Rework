@@ -1,6 +1,5 @@
 package com.robertx22.mine_and_slash.database.data.spells.components;
 
-import com.robertx22.library_of_exile.main.ExileLog;
 import com.robertx22.library_of_exile.registry.ExileRegistryType;
 import com.robertx22.library_of_exile.registry.IAutoGson;
 import com.robertx22.library_of_exile.registry.IGUID;
@@ -159,20 +158,9 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         return WeaponTypes.none;
     }
 
-    public final void onCastingTick(SpellCastContext ctx) {
-        int timesToCast = (int) ctx.spell.getConfig().times_to_cast;
-        if (timesToCast > 1) {
-            // check how many times we should've cast by now to see if it increased
-            int castTimeTicks = getCastTimeTicks(ctx);
-            int castCountLastTick = (ctx.ticksInUse - 1) * timesToCast / castTimeTicks;
-            int castCountThisTick = ctx.ticksInUse * timesToCast / castTimeTicks;
-
-            if (castCountThisTick != castCountLastTick) {
-                this.cast(ctx);
-            }
-        } else if (timesToCast < 1) {
-            ExileLog.get().warn("Times to cast spell is: " + timesToCast + " . this seems like a bug.");
-        }
+    public void runTickActions(SpellCastContext ctx) {
+        // allow spell to run actions during cast
+        attached.onTick(SpellCtx.onCastTick(ctx.caster, ctx.calcData));
     }
 
     public void cast(SpellCastContext ctx) {

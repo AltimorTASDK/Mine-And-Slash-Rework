@@ -76,6 +76,12 @@ public class SpellCtx {
         return new SpellCtx(EntityActivation.ON_CAST, caster, caster, caster, data);
     }
 
+    public static SpellCtx onCastTick(LivingEntity caster, CalculatedSpellData data) {
+        Objects.requireNonNull(caster);
+        Objects.requireNonNull(data);
+        return new SpellCtx(EntityActivation.ON_CAST_TICK, caster, caster, caster, data);
+    }
+
     // todo this might not work or need custom mapholder data to set it to target
     public static SpellCtx onHit(LivingEntity caster, Entity sourceEntity, LivingEntity target, CalculatedSpellData data) {
         Objects.requireNonNull(caster);
