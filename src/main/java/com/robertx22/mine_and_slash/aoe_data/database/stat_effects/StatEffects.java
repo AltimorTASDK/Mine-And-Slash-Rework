@@ -169,6 +169,7 @@ public class StatEffects implements ExileRegistryInit {
     public static StatEffect DURATION_INCREASE = new IncreaseNumberByPercentEffect(EventData.DURATION_MULTI);
     public static StatEffect AGGRO_INCREASE = new IncreaseNumberByPercentEffect(EventData.AGGRO_RADIUS_MULTI);
     public static StatEffect DECREASE_CAST_TIME = new DecreaseNumberByPercentEffect(EventData.CAST_TICKS);
+    public static StatEffect DECREASE_RECAST_TIME = new DecreaseNumberByPercentEffect(EventData.RECAST_TICKS);
     public static StatEffect INCREASE_AREA = new IncreaseNumberByPercentEffect(EventData.AREA_MULTI);
     public static StatEffect APPLY_CAST_SPEED_TO_CD = new ApplyCooldownAsCastTimeEffect();
     public static StatEffect CANCEL_EVENT = new CancelEvent();

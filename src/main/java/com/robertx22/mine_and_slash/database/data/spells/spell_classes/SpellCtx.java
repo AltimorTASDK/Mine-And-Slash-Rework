@@ -114,4 +114,10 @@ public class SpellCtx {
         return new SpellCtx(EntityActivation.ON_TICK, sourceEntity, caster, target, data);
     }
 
+    public static SpellCtx onCastTick(LivingEntity caster, CalculatedSpellData data) {
+        Objects.requireNonNull(caster);
+        Objects.requireNonNull(data);
+        return new SpellCtx(EntityActivation.ON_CAST_TICK, caster, caster, caster, data);
+    }
+
 }

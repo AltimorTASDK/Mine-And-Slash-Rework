@@ -28,7 +28,7 @@ public class PetAttackUTIL {
 
                 boolean cancast = false;
                 if (caster instanceof Player p) {
-                    if (Load.player(p).spellCastingData.canCast(basic, p).can) {
+                    if (Load.player(p).spellCastingData.canCast(ctx).can) {
                         cancast = true;
                     } else {
                         cancast = false;

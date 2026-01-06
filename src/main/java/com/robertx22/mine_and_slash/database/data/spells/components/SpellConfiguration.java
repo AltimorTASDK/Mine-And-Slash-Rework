@@ -25,7 +25,9 @@ public class SpellConfiguration {
     public SummonType summonType = SummonType.NONE;
     public String charge_name = "";
     public String summon_basic_atk = "";
+    public boolean channeled = false;
     private int cast_time_ticks = 0;
+    private int recast_time_ticks = 0;
     public int cooldown_ticks = 20;
     private String style = PlayStyle.STR.id;
     public TagList<SpellTag> tags = new TagList<>();
@@ -49,6 +51,10 @@ public class SpellConfiguration {
 
     public int getCastTimeTicks() {
         return cast_time_ticks;
+    }
+
+    public int getRecastTimeTicks() {
+        return recast_time_ticks;
     }
 
     public SpellConfiguration applyCastSpeedToCooldown() {

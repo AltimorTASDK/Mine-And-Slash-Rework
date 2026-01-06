@@ -16,6 +16,11 @@ import java.util.Objects;
 
 public class SpellCastContext {
 
+    public enum CastType {
+        INITIAL_CAST,
+        CHANNEL_LOOP
+    }
+
     public final LivingEntity caster;
     public final EntityData data;
     public final int ticksInUse;
@@ -24,11 +29,17 @@ public class SpellCastContext {
     public SpellStatsCalculationEvent event;
     public CalculatedSpellData calcData;
     public Unit unit;
+    public CastType type;
 
     public SpellCastContext(LivingEntity caster, int ticksInUse, Spell spell) {
+        this(caster, ticksInUse, spell, CastType.INITIAL_CAST);
+    }
+
+    public SpellCastContext(LivingEntity caster, int ticksInUse, Spell spell, CastType type) {
         this.caster = caster;
         this.ticksInUse = ticksInUse;
         this.spell = spell;
+        this.type = type;
         this.data = Load.Unit(caster);
 
         Objects.requireNonNull(spell);

@@ -1,6 +1,5 @@
 package com.robertx22.mine_and_slash.database.data.spells.components;
 
-import com.robertx22.library_of_exile.main.ExileLog;
 import com.robertx22.library_of_exile.registry.ExileRegistryType;
 import com.robertx22.library_of_exile.registry.IAutoGson;
 import com.robertx22.library_of_exile.registry.IGUID;
@@ -159,20 +158,9 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         return WeaponTypes.none;
     }
 
-    public final void onCastingTick(SpellCastContext ctx) {
-        int timesToCast = (int) ctx.spell.getConfig().times_to_cast;
-        if (timesToCast > 1) {
-            // check how many times we should've cast by now to see if it increased
-            int castTimeTicks = getCastTimeTicks(ctx);
-            int castCountLastTick = (ctx.ticksInUse - 1) * timesToCast / castTimeTicks;
-            int castCountThisTick = ctx.ticksInUse * timesToCast / castTimeTicks;
-
-            if (castCountThisTick != castCountLastTick) {
-                this.cast(ctx);
-            }
-        } else if (timesToCast < 1) {
-            ExileLog.get().warn("Times to cast spell is: " + timesToCast + " . this seems like a bug.");
-        }
+    public void runTickActions(SpellCastContext ctx) {
+        // allow spell to run actions during cast
+        attached.onTick(SpellCtx.onCastTick(ctx.caster, ctx.calcData));
     }
 
     public void cast(SpellCastContext ctx) {
@@ -195,9 +183,18 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         return (int) Math.ceil(ctx.event.data.getNumber(EventData.CHARGE_COOLDOWN_TICKS).number);
     }
 
-    public final int getCastTimeTicks(SpellCastContext ctx) {
+    private final int getCastTimeTicks(SpellCastContext ctx, String id) {
         // if it casts 5 times a cast, it should take at least 5 ticks to cast it
-        return MathHelper.clamp((int) Math.ceil(ctx.event.data.getNumber(EventData.CAST_TICKS).number), config.times_to_cast, 10000);
+        return MathHelper.clamp((int) Math.ceil(ctx.event.data.getNumber(id).number), config.times_to_cast, 10000);
+    }
+
+    public final int getCastTimeTicks(SpellCastContext ctx) {
+        switch (ctx.type) {
+        case CHANNEL_LOOP:
+            return getCastTimeTicks(ctx, EventData.RECAST_TICKS);
+        default:
+            return getCastTimeTicks(ctx, EventData.CAST_TICKS);
+        }
     }
 
     @Override
@@ -272,12 +269,21 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
             list.add(Words.COOLDOWN.locName(tooltipFormatTicksAsSeconds(getCooldownTicks(ctx))).withStyle(ChatFormatting.YELLOW));
         }
 
+        if (config.channeled) {
+            list.add(Words.CHANNELED.locName().withStyle(ChatFormatting.BLUE));
+        }
+
         int casttime = getCastTimeTicks(ctx);
 
         if (casttime <= 1) {
             list.add(Words.INSTANT_CAST.locName().withStyle(ChatFormatting.GREEN));
         } else {
             list.add(Words.CAST_TIME.locName(tooltipFormatTicksAsSeconds(casttime)).withStyle(ChatFormatting.GREEN));
+        }
+        if (config.channeled) {
+            SpellCastContext recastCtx = new SpellCastContext(info.player, 0, this, SpellCastContext.CastType.CHANNEL_LOOP);
+            int recasttime = getCastTimeTicks(recastCtx);
+            list.add(Words.RECAST_TIME.locName(tooltipFormatTicksAsSeconds(recasttime)).withStyle(ChatFormatting.GREEN));
         }
 
         Set<String> radiuses = new LinkedHashSet<>();

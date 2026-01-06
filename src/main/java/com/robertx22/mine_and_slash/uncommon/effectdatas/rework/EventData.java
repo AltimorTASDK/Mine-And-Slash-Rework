@@ -53,6 +53,7 @@ public class EventData {
     public static String SECONDS = "seconds";
 
     public static String CAST_TICKS = "cast_ticks";
+    public static String RECAST_TICKS = "recast_ticks";
     public static String EFFECT_DURATION_TICKS = "effect_duration_ticks";
     public static String EFFECT_IS_INFINITE = "effect_is_infinite";
     public static String COOLDOWN_TICKS = "cd_ticks";

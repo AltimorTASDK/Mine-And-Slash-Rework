@@ -73,6 +73,7 @@ public class SpellChangeStats {
             .addCondition(x -> StatConditions.SPELL_HAS_TAG.get(SpellTags.magic))
             .addCondition(x -> StatConditions.SPELL_NOT_HAVE_TAG.get(SpellTags.not_affected_by_cast_speed))
             .addEffect(StatEffects.DECREASE_CAST_TIME)
+            .addEffect(StatEffects.DECREASE_RECAST_TIME)
             .addCondition(DatapackStatBuilder.EffectPlace.SECOND, StatConditions.SPELL_HAS_TAG.get(SpellTags.CAST_TO_CD))
             .addEffect(DatapackStatBuilder.EffectPlace.SECOND, StatEffects.APPLY_CAST_SPEED_TO_CD)
             .setLocName(x -> "Cast Speed")
