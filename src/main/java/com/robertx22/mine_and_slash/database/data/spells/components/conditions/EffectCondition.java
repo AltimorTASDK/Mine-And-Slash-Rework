@@ -21,6 +21,7 @@ public abstract class EffectCondition extends BaseFieldNeeder implements IGUID {
     public static OnTickCondition EVERY_X_TICKS;
     public static ChanceCondition CHANCE;
     public static CasterHasEffectCondition CASTER_HAS_POTION;
+    public static IsRecastCondition IS_RECAST;
 
     public static OnCastCondition ON_CAST;
     public static OnExpireCondition ON_ENTITY_EXPIRE;
@@ -94,6 +95,7 @@ public abstract class EffectCondition extends BaseFieldNeeder implements IGUID {
         EVERY_X_TICKS = of(new OnTickCondition());
         CHANCE = of(new ChanceCondition());
         CASTER_HAS_POTION = of(new CasterHasEffectCondition());
+        IS_RECAST = of(new IsRecastCondition());
 
         ON_CAST = of(new OnCastCondition());
         ON_ENTITY_EXPIRE = of(new OnExpireCondition());
