@@ -29,12 +29,16 @@ public class SpellCastBarOverlay {
 
         if (data.spellCastingData.isCasting() && data.spellCastingData.castTickLeft > 0) {
 
-            float total = data.spellCastingData.spellTotalCastTicks;
-            float current = data.spellCastingData.castTickLeft;
+            Spell spell = data.spellCastingData.getSpellBeingCast();
 
-            float percent = (total - current + partialtick) / total;
+            if (spell.config.show_cast_bar) {
+                float total = data.spellCastingData.spellTotalCastTicks;
+                float current = data.spellCastingData.castTickLeft;
 
-            renderCastBar(gui, data.spellCastingData.getSpellBeingCast(), percent);
+                float percent = (total - current + partialtick) / total;
+
+                renderCastBar(gui, spell, percent);
+            }
 
         }
 
