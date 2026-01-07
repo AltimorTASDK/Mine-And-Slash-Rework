@@ -158,6 +158,11 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         return WeaponTypes.none;
     }
 
+
+    public void runCastEndActions(SpellCastContext ctx) {
+        attached.onCastEnd(SpellCtx.onCastEnd(ctx.caster, ctx.calcData));
+    }
+
     public void runTickActions(SpellCastContext ctx) {
         // allow spell to run actions during cast
         attached.onTick(SpellCtx.onCastTick(ctx.caster, ctx.calcData));
@@ -183,9 +188,17 @@ public final class Spell implements ISkillGem, IGUID, IAutoGson<Spell>, JsonExil
         return (int) Math.ceil(ctx.event.data.getNumber(EventData.CHARGE_COOLDOWN_TICKS).number);
     }
 
-    public final int getCastTimeTicks(SpellCastContext ctx) {
+    private final int clampCastTimeTicks(float number) {
         // if it casts 5 times a cast, it should take at least 5 ticks to cast it
-        return MathHelper.clamp((int) Math.ceil(ctx.event.data.getNumber(EventData.CAST_TICKS).number), config.times_to_cast, 10000);
+        return MathHelper.clamp((int) Math.ceil(number), config.times_to_cast, 10000);
+    }
+
+    public final int getBaseCastTimeTicks(SpellCastContext ctx) {
+        return clampCastTimeTicks(ctx.event.data.getOriginalNumber(EventData.CAST_TICKS).number);
+    }
+
+    public final int getCastTimeTicks(SpellCastContext ctx) {
+        return clampCastTimeTicks(ctx.event.data.getNumber(EventData.CAST_TICKS).number);
     }
 
     @Override

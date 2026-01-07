@@ -12,6 +12,8 @@ public class AttachedSpell {
 
     public List<ComponentPart> on_tick = new ArrayList<>();
 
+    public List<ComponentPart> on_cast_end = new ArrayList<>();
+
     public HashMap<String, List<ComponentPart>> entity_components = new HashMap<>();
 
     public void onCast(SpellCtx ctx) {
@@ -20,6 +22,10 @@ public class AttachedSpell {
 
     public void onTick(SpellCtx ctx) {
         on_tick.forEach(x -> x.tryActivate(ctx));
+    }
+
+    public void onCastEnd(SpellCtx ctx) {
+        on_cast_end.forEach(x -> x.tryActivate(ctx));
     }
 
     public List<ComponentPart> getDataForEntity(String en) {

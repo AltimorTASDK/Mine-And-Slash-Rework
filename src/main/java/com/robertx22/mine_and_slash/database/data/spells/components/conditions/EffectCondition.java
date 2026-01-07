@@ -22,6 +22,7 @@ public abstract class EffectCondition extends BaseFieldNeeder implements IGUID {
     public static ChanceCondition CHANCE;
     public static CasterHasEffectCondition CASTER_HAS_POTION;
     public static IsRecastCondition IS_RECAST;
+    public static IsSpellKeyHeldCondition IS_SPELL_KEY_HELD;
 
     public static OnCastCondition ON_CAST;
     public static OnExpireCondition ON_ENTITY_EXPIRE;
@@ -96,6 +97,7 @@ public abstract class EffectCondition extends BaseFieldNeeder implements IGUID {
         CHANCE = of(new ChanceCondition());
         CASTER_HAS_POTION = of(new CasterHasEffectCondition());
         IS_RECAST = of(new IsRecastCondition());
+        IS_SPELL_KEY_HELD = of(new IsSpellKeyHeldCondition());
 
         ON_CAST = of(new OnCastCondition());
         ON_ENTITY_EXPIRE = of(new OnExpireCondition());

@@ -8,15 +8,15 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.Arrays;
 
-public class IsRecastCondition extends EffectCondition {
+public class IsSpellKeyHeldCondition extends EffectCondition {
 
-    public IsRecastCondition() {
+    public IsSpellKeyHeldCondition() {
         super(Arrays.asList());
     }
 
     @Override
     public boolean canActivate(SpellCtx ctx, MapHolder data) {
-        return ctx.caster instanceof Player p && Load.player(p).spellCastingData.isRecast;
+        return ctx.caster instanceof Player p && Load.player(p).spellCastingData.isSpellKeyHeld();
     }
 
     public MapHolder create() {
@@ -27,7 +27,7 @@ public class IsRecastCondition extends EffectCondition {
 
     @Override
     public String GUID() {
-        return "is_recast";
+        return "is_spell_key_held";
     }
 }
 

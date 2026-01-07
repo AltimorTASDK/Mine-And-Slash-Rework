@@ -14,7 +14,6 @@ import com.robertx22.mine_and_slash.database.data.spells.components.Spell;
 import com.robertx22.mine_and_slash.database.data.spells.entities.CalculatedSpellData;
 import com.robertx22.mine_and_slash.database.data.spells.spell_classes.CastingWeapon;
 import com.robertx22.mine_and_slash.database.data.spells.spell_classes.bases.SpellCastContext;
-import com.robertx22.mine_and_slash.database.data.spells.spell_classes.bases.SpellPredicates;
 import com.robertx22.mine_and_slash.database.data.stats.types.LearnSpellStat;
 import com.robertx22.mine_and_slash.database.data.stats.types.MaxAllSpellLevels;
 import com.robertx22.mine_and_slash.database.data.stats.types.MaxSpellLevel;
@@ -227,8 +226,13 @@ public class SpellCastingData {
 
     // Tick count adjusted for cast speed
     private double normalizedCastTicksDoneExact = 0.0;
-    // The the tick count to be used with EntityActivation.ON_CAST_TICK (timing stays consistent with cast speed)
+    // The tick count to be used with EntityActivation.ON_CAST_TICK (timing stays consistent with cast speed)
     public transient int spellActionTickCount;
+
+    // Whether this cast was performed through the recast action
+    public boolean isRecast = false;
+    // Base cast time override for next cast
+    public transient int castTimeOverride = -1;
 
     // Spell inputs to continuously attempt
     transient List<SpellInputBufferEntry> spellInputBuffer = new LinkedList<>();
@@ -317,16 +321,30 @@ public class SpellCastingData {
         return false;
     }
 
+    // Prevent recursive cancelCasts
+    transient boolean insideCancelCast = false;
+
     public void cancelCast(LivingEntity entity) {
 
-        if (!isCasting()) {
+        if (insideCancelCast || !isCasting()) {
             return;
         }
 
         Spell spell = getSpellBeingCast();
         SpellCastContext ctx = new SpellCastContext(entity, 0, spell);
 
-        onSpellCastFinished(ctx);
+        this.isRecast = false;
+
+        insideCancelCast = true;
+
+        ctx.spell.runCastEndActions(ctx);
+
+        insideCancelCast = false;
+
+        if (this.isRecast) {
+            // spell repeated with recast action
+            return;
+        }
 
         for (Map.Entry<String, ExileEffectInstanceData> en : ctx.data.statusEffects.exileMap.entrySet()) {
             ExileEffect eff = ExileDB.ExileEffects().get(en.getKey());
@@ -342,11 +360,14 @@ public class SpellCastingData {
             TellClientEntityCastingSpell.sendUpdates(PlayerAnimations.CastEnum.CAST_FINISH, p, spell);
         }
 
+        setCooldownOnCasted(ctx);
+        this.casting = false;
         this.calcSpell = null;
-        castTickLeft = 0;
-        spellTotalCastTicks = 0;
-        castTicksDone = 0;
-        castSpellNumber = -1;
+        this.castTickLeft = 0;
+        this.spellTotalCastTicks = 0;
+        this.castTicksDone = 0;
+        this.castSpellNumber = -1;
+        this.castTimeOverride = -1;
     }
 
     public boolean isCasting() {
@@ -476,6 +497,26 @@ public class SpellCastingData {
         }
     }
 
+    public boolean recast(Player player) {
+
+        if (!isCasting()) {
+            return false;
+        }
+
+        Spell spell = getSpellBeingCast();
+
+        if (!canCast(spell, player, true).can) {
+            cancelCast(player);
+            return false;
+        }
+
+        SpellCastContext ctx = new SpellCastContext(player, 0, spell);
+        setToCastAndSpendResources(ctx);
+        isRecast = true;
+
+        return true;
+    }
+
     public Spell getSpellBeingCast() {
 
         if (calcSpell != null) {
@@ -487,11 +528,15 @@ public class SpellCastingData {
     }
 
     public ExplainedResult canCast(Spell spell, Player player) {
+        return canCast(spell, player, false);
+    }
+
+    public ExplainedResult canCast(Spell spell, Player player, boolean ignoreCasting) {
 
         if (player.level().isClientSide) {
             return ExplainedResult.failure(Component.literal("Client side"));
         }
-        if (isCasting()) {
+        if (!ignoreCasting && isCasting()) {
             return ExplainedResult.failure(Chats.ALREADY_CASTING.locName());
         }
 
@@ -611,20 +656,6 @@ public class SpellCastingData {
 
         ctx.data.sync.setDirty();
 
-    }
-
-    public void onSpellCastFinished(SpellCastContext ctx) {
-
-        setCooldownOnCasted(ctx);
-        this.casting = false;
-
-        /*
-        if (ctx.caster instanceof ServerPlayer p) {
-            Load.Unit(ctx.caster).sync.setDirty();
-            Packets.sendToClient(p, new TellClientEntityCastingSpell(PlayerAnimations.CastEnum.CAST_FINISH, p, ctx.spell));
-        }
-
-         */
     }
 
 }

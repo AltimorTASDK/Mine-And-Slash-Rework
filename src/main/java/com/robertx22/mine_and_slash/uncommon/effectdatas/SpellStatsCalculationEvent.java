@@ -47,14 +47,20 @@ public class SpellStatsCalculationEvent extends EffectEvent {
 
         this.data.setString(EventData.SPELL, spellid);
 
+        int castTicks = spell.config.getCastTimeTicks();
         float manamultilvl = GameBalanceConfig.get().MANA_COST_SCALING.getMultiFor(lvl);
+
         if (caster instanceof Player p) {
             var gem = Load.player(p).getSkillGemInventory().getSpellGem(spell);
             if (gem != null) {
                 manamultilvl *= gem.getManaCostMulti();
             }
+            int castTimeOverride = Load.player(p).spellCastingData.castTimeOverride;
+            if (castTimeOverride >= 0) {
+                castTicks = castTimeOverride;
+            }
         }
-        this.data.setupNumber(EventData.CAST_TICKS, spell.config.getCastTimeTicks());
+        this.data.setupNumber(EventData.CAST_TICKS, castTicks);
         this.data.setupNumber(EventData.MANA_COST, manamultilvl * spell.config.mana_cost.getValue(caster, spell));
         this.data.setupNumber(EventData.ENERGY_COST, manamultilvl * spell.config.ene_cost.getValue(caster, spell));
         this.data.setupNumber(EventData.COOLDOWN_TICKS, spell.config.cooldown_ticks);
